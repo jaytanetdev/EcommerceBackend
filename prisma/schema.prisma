@@ -1,0 +1,165 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  user_id       Int        @id @default(autoincrement())
+  first_name    String
+  last_name     String
+  username      String     @unique
+  password      String
+  profile_image String?
+  is_active     Boolean    @default(true)
+  permission    Int        @default(0)
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @default(now()) @updatedAt
+  bookbanks     bookbank[]
+  address       address[]
+  orders        orders[]
+  products      products[]
+}
+
+model bookbank {
+  bookbank_id      Int      @id @default(autoincrement())
+  transfer_type    String
+  bookbank_name    String
+  account_number   String
+  promptpay_name   String
+  promptpay_number String
+  is_active        Boolean  @default(true)
+  created_by       String?
+  updated_by       String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @default(now()) @updatedAt
+  fk_user_id       Int?
+  User             users?   @relation(fields: [fk_user_id], references: [user_id])
+}
+
+model address {
+  address_id           Int      @id @default(autoincrement())
+  address_name         String
+  fk_user_id           Int?
+  recipient_first_name String
+  recipient_last_name  String
+  recipient_phone      String
+  address_detail       String
+  province             String
+  county               String
+  subdistrict          String
+  zip_code             String
+  is_active            Boolean  @default(true)
+  created_by           String?
+  updated_by           String?
+  created_at           DateTime @default(now())
+  updated_at           DateTime @default(now()) @updatedAt
+  User                 users?   @relation(fields: [fk_user_id], references: [user_id])
+  orders               orders[]
+}
+
+model orders {
+  order_id        Int             @id @default(autoincrement())
+  sum_order_price Float
+  fk_user_id      Int?
+  fk_address_id   Int
+  status          String
+  created_by      String?
+  updated_by      String?
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @default(now()) @updatedAt
+  User            users?          @relation(fields: [fk_user_id], references: [user_id])
+  address         address?        @relation(fields: [fk_address_id], references: [address_id])
+  payments        payments[]
+  order_details   order_details[]
+}
+
+model payments {
+  payment_id  Int      @id @default(autoincrement())
+  fk_order_id Int
+  status      Int
+  created_by  String?
+  updated_by  String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
+  orders      orders?  @relation(fields: [fk_order_id], references: [order_id])
+}
+
+model order_details {
+  order_detail_id      Int      @id @default(autoincrement())
+  fk_order_id          Int
+  fk_product_choice_id Int
+  is_active            Boolean  @default(true)
+  created_by           String?
+  updated_by           String?
+  created_at           DateTime @default(now())
+  updated_at           DateTime @default(now()) @updatedAt
+  orders               orders?  @relation(fields: [fk_order_id], references: [order_id])
+}
+
+model category {
+  category_id   Int        @id @default(autoincrement())
+  category_name String
+  is_active     Boolean    @default(true)
+  created_by    String?
+  updated_by    String?
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @default(now()) @updatedAt
+  products      products[]
+}
+
+model products {
+  product_id      Int               @id @default(autoincrement())
+  fk_category_id  Int
+  fk_user_id      Int?
+  product_name    String
+  description     String
+  is_active       Boolean           @default(true)
+  created_by      String?
+  updated_by      String?
+  created_at      DateTime          @default(now())
+  updated_at      DateTime          @default(now()) @updatedAt
+  category      category?       @relation(fields: [fk_category_id], references: [category_id])
+  user            users?            @relation(fields: [fk_user_id], references: [user_id])
+  products_choice products_choice[]
+  products_image  products_image[]
+}
+
+model products_choice {
+  product_choice_id   Int              @id @default(autoincrement())
+  fk_product_id       Int
+  product_choice_name String
+  price               Float
+  discount            Float
+  stock               Int
+  is_active           Boolean          @default(true)
+  created_by          String?
+  updated_by          String?
+  created_at          DateTime         @default(now())
+  updated_at          DateTime         @default(now()) @updatedAt
+  products            products?        @relation(fields: [fk_product_id], references: [product_id])
+  products_image      products_image[]
+}
+
+model products_image {
+  product_image_id     Int              @id @default(autoincrement())
+  fk_product_id        Int?
+  fk_product_choice_id Int?
+  product_images       String
+  is_active            Boolean          @default(true)
+  created_by           String?
+  updated_by           String?
+  created_at           DateTime         @default(now())
+  updated_at           DateTime         @default(now()) @updatedAt
+  products             products?        @relation(fields: [fk_product_id], references: [product_id])
+  products_choice      products_choice? @relation(fields: [fk_product_choice_id], references: [product_choice_id])
+}
